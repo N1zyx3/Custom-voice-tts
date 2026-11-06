@@ -9,9 +9,9 @@ import soundfile as sf
 
 from qwen_tts import Qwen3TTSModel
 
-TEXT = input("Write path to output text file (.txt): ")
-VOICE_WAV = input("Write path to reference voice file (.wav, .mp3, .flac, .m4a, .ogg, .opus, .aiff): ")
-VOICE_TEXT = input("Write path to reference text file (.txt): ")
+TEXT = Path(input("Write path to output text file (.txt): "))
+VOICE_WAV = Path(input("Write path to reference voice file (.wav, .mp3, .flac, .m4a, .ogg, .opus, .aiff): "))
+VOICE_TEXT = Path(input("Write path to reference text file (.txt): "))
 OUTPUT_FILE = "output.wav"
 REF_SAMPLE_RATE = 24000
 
@@ -73,6 +73,12 @@ def main():
     print(f"Reference audio: {ref_audio}")
     print(f"Reference transcript: {ref_text[:200]}...")
 
+    if shutil.which("ffmpeg") is None:
+        sys.exit(
+            "ERROR: ffmpeg not found in system!\n"
+            "Install ffmpeg and add it into PATH,\n"
+            "or put ffmpeg.exe into folder with this executable."
+        )
     ref_wav = normalize_reference_audio(ref_audio)
     print(f"Normalized reference audio: {ref_wav}")
 
