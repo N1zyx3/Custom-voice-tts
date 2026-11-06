@@ -9,10 +9,10 @@ import soundfile as sf
 
 from qwen_tts import Qwen3TTSModel
 
-ROOT = Path(__file__).resolve().parent
-TEXT_FILE = ROOT / "text.txt"
-REFERENCE_DIR = ROOT / "reference"
-OUTPUT_FILE = ROOT / "output.wav"
+TEXT = input("Write path to output text file (.txt): ")
+VOICE_WAV = input("Write path to reference voice file (.wav, .mp3, .flac, .m4a, .ogg, .opus, .aiff): ")
+VOICE_TEXT = input("Write path to reference text file (.txt): ")
+OUTPUT_FILE = "output.wav"
 REF_SAMPLE_RATE = 24000
 
 MODEL_ID = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
@@ -46,50 +46,29 @@ def normalize_reference_audio(audio_path: Path) -> Path:
 
 
 def read_text_to_speak() -> str:
-    if not TEXT_FILE.exists():
-        sys.exit(f"ERROR: {TEXT_FILE} not found. Create it and put the text to speak there.")
-    text = TEXT_FILE.read_text(encoding="utf-8").strip()
+    if not TEXT.exists():
+        sys.exit(f"ERROR: {TEXT} not found. Create it and put the text to speak there.")
+    text = TEXT.read_text(encoding="utf-8").strip()
     if not text:
-        sys.exit(f"ERROR: {TEXT_FILE} is empty.")
+        sys.exit(f"ERROR: {TEXT} is empty.")
     return text
 
 
-def find_reference_pair():
-    if not REFERENCE_DIR.is_dir():
-        sys.exit(f"ERROR: folder {REFERENCE_DIR} not found. Create it and put the reference voice + transcript there.")
-
-    audio_files = []
-    text_files = []
-    for entry in REFERENCE_DIR.iterdir():
-        if not entry.is_file():
-            continue
-        if entry.suffix.lower() in AUDIO_EXTS:
-            audio_files.append(entry)
-        elif entry.suffix.lower() == ".txt":
-            text_files.append(entry)
-
-    if len(audio_files) != 1 or len(text_files) != 1:
-        found = [
-            f"{entry.name} ({'audio' if entry.suffix.lower() in AUDIO_EXTS else 'text'})"
-            for entry in REFERENCE_DIR.iterdir()
-            if entry.is_file() and (entry.suffix.lower() in AUDIO_EXTS or entry.suffix.lower() == ".txt")
-        ]
-        sys.exit(
-            "ERROR: reference/ must contain exactly one audio file and one .txt transcript "
-            f"(found audio: {len(audio_files)}, text: {len(text_files)}).\n"
-            f"Found files: {found or 'none'}"
-        )
-
-    ref_audio = audio_files[0]
-    ref_text = text_files[0].read_text(encoding="utf-8").strip()
-    if not ref_text:
-        sys.exit(f"ERROR: transcript file {text_files[0]} is empty.")
+def verify_reference_files():
+    if VOICE_WAV.suffix.lower() in AUDIO_EXTS:
+        ref_audio = VOICE_WAV
+    else:
+        sys.exit("ERROR: unrecognized audio format.")
+    if VOICE_TEXT.suffix.lower() == ".txt":
+        ref_text = VOICE_TEXT.read_text(encoding="utf-8").strip()
+        if not ref_text:
+            sys.exit("ERROR: unrecognized text format or empty file.")
     return ref_audio, ref_text
 
 
 def main():
     text = read_text_to_speak()
-    ref_audio, ref_text = find_reference_pair()
+    ref_audio, ref_text = verify_reference_files()
     print(f"Text to speak ({len(text)} chars): {text[:200]}...")
     print(f"Reference audio: {ref_audio}")
     print(f"Reference transcript: {ref_text[:200]}...")
