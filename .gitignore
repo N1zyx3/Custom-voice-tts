@@ -3,3 +3,6 @@ reference
 .idea
 .venv
 output.wav
+main.spec
+build
+dist
